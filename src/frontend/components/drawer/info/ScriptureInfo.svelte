@@ -2,7 +2,7 @@
     import type { MediaStyle } from "../../../../types/Main"
     import type { BibleContent } from "../../../../types/Scripture"
     import type { Item } from "../../../../types/Show"
-    import { activeEdit, activePage, activeScripture, activeStyle, drawerTabsData, media, outputs, scriptureSettings, settingsTab, styles, templates } from "../../../stores"
+    import { activeEdit, activePage, activeScripture, activeStyle, drawerTabsData, inferredScriptureSuggestion, media, outputs, scriptureSettings, settingsTab, styles, templates } from "../../../stores"
     import { setDefaultScriptureTemplates } from "../../../utils/createData"
     import { confirmCustom } from "../../../utils/popup"
     import { mediaExtensions } from "../../../values/extensions"
@@ -15,14 +15,17 @@
     import Link from "../../inputs/Link.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialColorInput from "../../inputs/MaterialColorInput.svelte"
+    import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
     import MaterialFilePicker from "../../inputs/MaterialFilePicker.svelte"
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
     import MaterialPopupButton from "../../inputs/MaterialPopupButton.svelte"
+    import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
     import Media from "../../output/layers/Media.svelte"
     import Textbox from "../../slide/Textbox.svelte"
     import Zoomed from "../../slide/Zoomed.svelte"
     import { createScriptureShow, getActiveScripturesContent, getMergedAttribution, getScriptureSlidesNew, textKeys, useOldScriptureSystem } from "../bible/scripture"
+    import { playSuggestedInferredScripture } from "../bible/scriptureInference"
 
     export let optionsOpen: boolean
 
@@ -156,6 +159,8 @@
 
     let longVersesMenuOpened = false
     let referenceMenuOpened = false
+    const inferenceProviders = [{ value: "web_speech", label: "Web Speech" }]
+    const inferencePrivacyModes = [{ value: "local", label: "Local only" }, { value: "cloud", label: "Cloud allowed" }]
 
     $: onlyOneNormalOutput = getAllNormalOutputs().length === 1
     $: styleScriptureTemplate = onlyOneNormalOutput ? $styles[styleId]?.templateScripture || "" : ""
@@ -251,6 +256,31 @@
             {#if $scriptureSettings.smartSplit === false}
                 <MaterialNumberInput label="scripture.max_verses" value={$scriptureSettings.versesPerSlide} defaultValue={3} min={1} max={100} on:change={(e) => update("versesPerSlide", e.detail)} hideWhenZero />
             {/if}
+
+            <InputRow arrow={$scriptureSettings.micInferenceEnabled}>
+                <MaterialToggleSwitch label="Infer scripture from microphone" style="margin-top: 10px;width: 100%;" checked={$scriptureSettings.micInferenceEnabled} defaultValue={false} on:change={(e) => update("micInferenceEnabled", e.detail)} />
+
+                <svelte:fragment slot="menu">
+                    {#if $scriptureSettings.micInferenceEnabled}
+                        <MaterialDropdown label="Provider" options={inferenceProviders} value={$scriptureSettings.inferenceProvider || "web_speech"} on:change={(e) => update("inferenceProvider", e.detail)} />
+                        <MaterialTextInput label="Language" value={$scriptureSettings.inferenceLanguage || "en-US"} placeholder="en-US" on:change={(e) => update("inferenceLanguage", e.detail)} />
+                        <MaterialDropdown label="Privacy mode" options={inferencePrivacyModes} value={$scriptureSettings.inferencePrivacyMode || "local"} on:change={(e) => update("inferencePrivacyMode", e.detail)} />
+                        <MaterialToggleSwitch label="Auto play inferred passage" checked={$scriptureSettings.inferenceAutoPlay} defaultValue={false} on:change={(e) => update("inferenceAutoPlay", e.detail)} />
+                        <MaterialNumberInput label="Confidence threshold (%)" value={Math.round(Number($scriptureSettings.inferenceConfidenceThreshold ?? 0.75) * 100)} min={0} max={100} on:change={(e) => update("inferenceConfidenceThreshold", Math.max(0, Math.min(1, Number(e.detail || 0) / 100)))} />
+                        <MaterialNumberInput label="Debounce (ms)" value={$scriptureSettings.inferenceDebounceMs || 5000} min={500} max={60000} on:change={(e) => update("inferenceDebounceMs", Number(e.detail || 5000))} />
+                    {/if}
+                </svelte:fragment>
+            </InputRow>
+
+            {#if $inferredScriptureSuggestion && !$scriptureSettings.inferenceAutoPlay}
+                <div class="inference-suggestion">
+                    <p>{$inferredScriptureSuggestion.reference}</p>
+                    <small>Confidence: {Math.round($inferredScriptureSuggestion.confidence * 100)}%</small>
+                    <MaterialButton variant="outlined" style="margin-top: 6px;" on:click={playSuggestedInferredScripture}>
+                        Play suggestion
+                    </MaterialButton>
+                </div>
+            {/if}
         {:else}
             <!-- Template -->
             <InputRow style={templateBackground ? "" : "margin-bottom: 10px;"}>
@@ -325,5 +355,17 @@
         font-size: 28px;
         font-style: italic;
         opacity: 0.7;
+    }
+
+    .inference-suggestion {
+        margin-top: 10px;
+        padding: 8px;
+        border: 1px solid var(--primary-lighter);
+        border-radius: 8px;
+    }
+
+    .inference-suggestion p {
+        margin: 0;
+        font-weight: 600;
     }
 </style>

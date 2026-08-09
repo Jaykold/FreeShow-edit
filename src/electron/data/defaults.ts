@@ -138,7 +138,14 @@ export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
         verseNumbers: true,
         showVersion: false,
         showVerse: true,
-        referenceDivider: ":"
+        referenceDivider: ":",
+        micInferenceEnabled: false,
+        inferenceAutoPlay: false,
+        inferenceProvider: "web_speech",
+        inferenceLanguage: "en-US",
+        inferencePrivacyMode: "local",
+        inferenceConfidenceThreshold: 0.75,
+        inferenceDebounceMs: 5000
     },
     groups: defaultGroups,
     midiIn: {},

@@ -5,6 +5,7 @@ import { outLocked } from "../stores"
 import { AudioAnalyser } from "./audioAnalyser"
 import { AudioInputCapture } from "./routing/audioInputCapture"
 import { AudioPlayer } from "./audioPlayer"
+import { startScriptureInferenceForMicrophone, stopScriptureInferenceForMicrophone } from "../components/drawer/bible/scriptureInference"
 
 type AudioMetadata = {
     name: string
@@ -35,6 +36,7 @@ export class AudioMicrophone {
             .getUserMedia({ audio: { deviceId: { exact: deviceId }, echoCancellation: false } })
             .then((stream) => {
                 AudioPlayer.playStream(id, stream, metadata)
+                startScriptureInferenceForMicrophone(deviceId)
             })
             .catch((err) => {
                 console.error(err)
@@ -45,6 +47,8 @@ export class AudioMicrophone {
     }
 
     static stop(id: string) {
+        const deviceId = id.startsWith("mic_sub_") ? id.slice("mic_sub_".length) : id
+        stopScriptureInferenceForMicrophone(deviceId)
         AudioPlayer.stop(id)
     }
 

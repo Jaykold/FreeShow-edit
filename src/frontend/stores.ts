@@ -78,6 +78,7 @@ export const focusedArea: Writable<string> = writable("")
 export const activeAnimate: Writable<any> = writable({ slide: -1, index: -1 })
 export const allOutputs: Writable<Outputs> = writable({}) // stage data in output windows
 export const activeScripture: Writable<{ id?: string; reference?: { book: number | string; chapters: (number | string)[]; verses: (number | string)[][] } }> = writable({})
+export const inferredScriptureSuggestion: Writable<{ reference: string; confidence: number; transcript: string; timestamp: number } | null> = writable(null)
 export const activeCanvaPresentation: Writable<{ designId: string; presentationName: string; slideCount?: number; thumbnail?: string; providerId?: ContentProviderId } | null> = writable(null)
 export const activeTriggerFunction: Writable<string> = writable("")
 export const guideActive: Writable<boolean> = writable(false)
@@ -312,7 +313,14 @@ export const scriptureSettings: Writable<any> = writable({
     longVersesChars: 100,
     longVersesTolerance: 0,
     splitLongVersesSuffix: false,
-    smartSplit: true
+    smartSplit: true,
+    micInferenceEnabled: false,
+    inferenceAutoPlay: false,
+    inferenceProvider: "web_speech",
+    inferenceLanguage: "en-US",
+    inferencePrivacyMode: "local",
+    inferenceConfidenceThreshold: 0.75,
+    inferenceDebounceMs: 5000
 }) // {default}
 
 // DRAWER

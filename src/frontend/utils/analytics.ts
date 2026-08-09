@@ -67,3 +67,11 @@ export function trackScriptureUsage(translationName: string, apiId: string | nul
 
     trackEvent("scripture_usage", { translation_name: translationName, api_id: apiId, verse_ref: verseRef })
 }
+
+export function trackScriptureInference(reference: string, confidence: number, autoPlayed: boolean) {
+    trackEvent("scripture_inference", {
+        verse_ref: reference,
+        confidence: Math.round(confidence * 100),
+        auto_played: autoPlayed ? 1 : 0
+    })
+}
